@@ -29,15 +29,21 @@ class PhotoelectricSensor(object):
         GPIO.add_event_callback(referenceInitPin, callback=lambda callback: self.__setLocationCount(callback))
 
     def __setStatus(self, callback):
-        print "U型光电被触发"
         if self.status:
             self.status = False
         else:
             self.status = True
+
+        print "U型光电被触发,之前位置：", self.locationCount
         if self.controlMotor.doubleClickFlag:
-            self.locationCount += 1
+            self.locationCount -= 1
+            if 0 == self.locationCount:
+                self.locationCount = self.locationTotal
         else:
             self.locationCount += 1
+            if self.locationTotal < self.locationCount:
+                self.locationCount = 1
+        print "U型光电被触发,当前位置：", self.locationCount
 
     def __setLocationCount(self, callback):
         print "检测到达初始位置，当前位置：", self.locationCount, "设置位置为1"
