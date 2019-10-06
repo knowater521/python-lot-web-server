@@ -22,6 +22,7 @@ class Motor(object):
         self.IN4 = IN4
         self.time = time
         GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
 
         GPIO.setup(IN1, GPIO.OUT)
         GPIO.setup(IN2, GPIO.OUT)
@@ -32,6 +33,8 @@ class Motor(object):
         GPIO.output(IN2, False)
         GPIO.output(IN3, False)
         GPIO.output(IN4, False)
+
+        self.status = False
 
     def step1(self):
         GPIO.output(self.IN4, True)
@@ -86,7 +89,7 @@ class Motor(object):
         self.step1()
         self.step2()
         self.step3()
-        self. step4()
+        self.step4()
         self.step5()
         self.step6()
         self.step7()

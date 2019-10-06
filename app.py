@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 '''
 
 Adapted excerpt from Getting Started with Raspberry Pi by Matt Richardson
@@ -28,7 +29,7 @@ for pin in pins:
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
 
-motor = ControlMotor(17, 16, 13, 12, 18)
+motor = ControlMotor(17, 16, 13, 12, 18, 20, 0.001, 40)
 
 
 @app.route("/")
@@ -90,4 +91,8 @@ def init_message():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
+    try:
+        app.run(host='0.0.0.0', port=80, debug=True)
+    finally:
+        print "主程序清理"
+        GPIO.cleanup()

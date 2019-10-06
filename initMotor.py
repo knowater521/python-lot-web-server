@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*
+
 from RPi import GPIO
 
+from button import Button
 from motor import Motor
 from reedSwitch import ReedSwitch
 import time
+
+
+def setLed(LED_PIN):
+    GPIO.output(LED_PIN, GPIO.HIGH)
+
+
+def setLedOff(LED_PIN):
+    GPIO.output(LED_PIN, GPIO.LOW)
 
 
 class InitMotor(Motor):
@@ -12,7 +22,7 @@ class InitMotor(Motor):
     """
     initMassage = ""
 
-    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, sleep, timeout=50):
+    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep, timeout=50):
         """
 
         :param IN1:
@@ -22,35 +32,58 @@ class InitMotor(Motor):
         :param reedSwitchPin:
         :param sleep: 脉冲信号间隔时间
         :param timeout: 初始化超时时间 秒
+        :param btnPin 急停按键
         """
 
-        print "初始化电机参数"
-        super(InitMotor, self).__init__(IN1, IN2, IN3, IN4, sleep)
         self.timeout = timeout
         print "加载干簧管传感器"
         self.reedSwitch = ReedSwitch(reedSwitchPin)
+        print "加载按键"
+        self.btn = Button(btnPin)
+        print "初始化电机参数"
+        super(InitMotor, self).__init__(IN1, IN2, IN3, IN4, sleep)
         print "初始化设备位置"
         self.initMotor()
         print "设备位置初始化位置结束"
 
     def initMotor(self):
+        if self.status:
+            setLed(24)
+            self.initMassage = "电机：", self.IN1, self.IN2, self.IN3, self.IN4, "检测到正在被执行中，请稍后，若无运转请检查设备是否异常！"
+            return False, "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
+        else:
+            self.status = True
+        btnStatus = self.btn.status
+        print "当前按键状态：", btnStatus
         print "设备位置初始化开始"
         reedSwitch = self.reedSwitch
         reedSwitch.status = False
         startTime = time.time()
         while not reedSwitch.status:
+            if self.btn.status != btnStatus:
+                setLed(25)
+                self.initMassage = "设备初始化被手动终止"
+                return False, "设备初始化被手动终止"
             self.left()
             if self.timeoutM(startTime):
-                self.setLed(24)
+                setLed(24)
                 self.initMassage = "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
                 return False, "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
         print "到达设备初始位置附近"
         flag = False
         for x in range(1, 150):
+            if self.btn.status != btnStatus:
+                setLed(25)
+                self.initMassage = "设备初始化被手动终止"
+                return False, "设备初始化被手动终止"
             self.left()
             time.sleep(0.005)
             if not reedSwitch.status:
                 for y in range(x / 2):
+                    if self.btn.status != btnStatus:
+                        setLed(25)
+                        self.initMassage = "设备初始化被手动终止"
+                        return False, "设备初始化被手动终止"
                     self.right()
                     time.sleep(0.01)
                 flag = True
@@ -61,26 +94,35 @@ class InitMotor(Motor):
 
             reedSwitch.status = False
             while not reedSwitch.status:
+                if self.btn.status != btnStatus:
+                    setLed(25)
+                    self.initMassage = "设备初始化被手动终止"
+                    return False, "设备初始化被手动终止"
                 self.left()
                 if self.timeoutM(startTime):
-                    self.setLed(24)
+                    setLed(24)
                     self.initMassage = "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
                     return False, "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
             print "到达设备初始位置附近"
             for x in range(1, 200):
+                if self.btn.status != btnStatus:
+                    setLed(25)
+                    self.initMassage = "设备初始化被手动终止"
+                    return False, "设备初始化被手动终止"
                 self.left()
                 time.sleep(0.01)
                 if not reedSwitch.status:
                     for y in range(x / 2):
+                        if self.btn.status != btnStatus:
+                            setLed(25)
+                            self.initMassage = "设备初始化被手动终止"
+                            return False, "设备初始化被手动终止"
                         self.right()
                         time.sleep(0.01)
                     break
         self.initMassage = "初始化成功"
-        self.setLed(23)
+        setLed(23)
         return True
-
-    def setLed(self, LED_PIN):
-        GPIO.output(LED_PIN, GPIO.HIGH)
 
     def timeoutM(self, startTime):
         return (time.time() - startTime) > self.timeout
@@ -96,10 +138,15 @@ class InitMotor(Motor):
 
 
 class ControlMotor(object):
-    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, sleep=0.001, timeout=50):
-        self.motor = InitMotor(IN1, IN2, IN3, IN4, reedSwitchPin, sleep, timeout)
+    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep=0.001, timeout=50):
+        self.motor = InitMotor(IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep, timeout)
+        self.motor.status = False
+        self.doubleClickFlag = False
         self.initMotorMessage = self.motor.initMassage
+        self.btnPin = btnPin
         print "初始化结果：", self.initMotorMessage
+        print "加载手动调整电机"
+        GPIO.add_event_callback(btnPin, callback=lambda callback: self.__controlMotor(callback))
 
     def leftPosition(self):
         self.motor.left()
@@ -108,3 +155,45 @@ class ControlMotor(object):
     def rightPosition(self):
         self.motor.right()
         return "右边"
+
+    def __controlMotor(self, callback):
+        if not self.motor.status:
+            setLed(25)
+            self.motor.status = True
+
+            while GPIO.input(self.btnPin) == 0:
+                if self.doubleClickFlag:
+                    self.motor.right()
+                else:
+                    self.motor.left()
+
+            self.__click()
+            self.motor.status = False
+            setLedOff(25)
+        # status = GPIO.input(self.ReedSwitchPin)
+
+    def __click(self):
+        result = 0
+        for i in range(200):
+            time.sleep(0.001)
+            pinStat = GPIO.input(self.btnPin)
+            if pinStat == GPIO.LOW and result == 0:
+                result = 1
+            if result == 1 and pinStat == GPIO.HIGH:
+                result = 2
+                if self.doubleClickFlag:
+                    setLed(24)
+                    time.sleep(0.25)
+                    setLedOff(23)
+                    setLedOff(24)
+                    setLedOff(25)
+                    self.doubleClickFlag = False
+                else:
+                    setLed(24)
+                    time.sleep(0.25)
+                    setLedOff(25)
+                    setLedOff(24)
+                    setLedOff(23)
+                    self.doubleClickFlag = True
+                return result
+        return 3
