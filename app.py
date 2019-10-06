@@ -10,6 +10,7 @@ Complete project details: https://randomnerdtutorials.com
 
 import RPi.GPIO as GPIO
 from flask import Flask, render_template, request
+# from gevent.pywsgi import WSGIServer
 
 from initMotor import ControlMotor
 
@@ -23,13 +24,13 @@ pins = {
     24: {'name': 'GPIO 24', 'state': GPIO.LOW},
     25: {'name': 'GPIO 25', 'state': GPIO.LOW}
 }
-
+GPIO.setwarnings(False)
 # Set each pin as an output and make it low:
 for pin in pins:
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
 
-motor = ControlMotor(17, 16, 13, 12, 18, 20, 0.001, 40)
+motor = ControlMotor(17, 16, 13, 12, 18, 20, 5, 4, 0.001, 40)
 
 
 @app.route("/")

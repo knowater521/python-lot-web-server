@@ -28,4 +28,4 @@ class ReedSwitch(object):
 
     def __del__(self):
         print "释放干簧管针脚资源"
-        # GPIO.cleanup()
+        GPIO.cleanup()

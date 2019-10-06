@@ -4,6 +4,7 @@ from RPi import GPIO
 
 from button import Button
 from motor import Motor
+from photoelectricSensor import PhotoelectricSensor
 from reedSwitch import ReedSwitch
 import time
 
@@ -29,7 +30,7 @@ class InitMotor(Motor):
         :param IN2:
         :param IN3:
         :param IN4:
-        :param reedSwitchPin:
+        :param reedSwitchPin: 干簧管pin
         :param sleep: 脉冲信号间隔时间
         :param timeout: 初始化超时时间 秒
         :param btnPin 急停按键
@@ -77,7 +78,7 @@ class InitMotor(Motor):
                 self.initMassage = "设备初始化被手动终止"
                 return False, "设备初始化被手动终止"
             self.left()
-            time.sleep(0.005)
+            # time.sleep(0.005)
             if not reedSwitch.status:
                 for y in range(x / 2):
                     if self.btn.status != btnStatus:
@@ -85,7 +86,7 @@ class InitMotor(Motor):
                         self.initMassage = "设备初始化被手动终止"
                         return False, "设备初始化被手动终止"
                     self.right()
-                    time.sleep(0.01)
+                    # time.sleep(0.01)
                 flag = True
                 break
 
@@ -110,7 +111,7 @@ class InitMotor(Motor):
                     self.initMassage = "设备初始化被手动终止"
                     return False, "设备初始化被手动终止"
                 self.left()
-                time.sleep(0.01)
+                # time.sleep(0.01)
                 if not reedSwitch.status:
                     for y in range(x / 2):
                         if self.btn.status != btnStatus:
@@ -118,7 +119,7 @@ class InitMotor(Motor):
                             self.initMassage = "设备初始化被手动终止"
                             return False, "设备初始化被手动终止"
                         self.right()
-                        time.sleep(0.01)
+                        # time.sleep(0.01)
                     break
         self.initMassage = "初始化成功"
         setLed(23)
@@ -138,15 +139,20 @@ class InitMotor(Motor):
 
 
 class ControlMotor(object):
-    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep=0.001, timeout=50):
+    def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, photoelectricSensorPin, locationTotal, sleep=0.001,
+                 timeout=50):
         self.motor = InitMotor(IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep, timeout)
         self.motor.status = False
         self.doubleClickFlag = False
         self.initMotorMessage = self.motor.initMassage
         self.btnPin = btnPin
+        self.doubleClickTimeFlag = 0
         print "初始化结果：", self.initMotorMessage
         print "加载手动调整电机"
         GPIO.add_event_callback(btnPin, callback=lambda callback: self.__controlMotor(callback))
+        GPIO.add_event_callback(btnPin, callback=lambda callback: self.__doubleClick(callback))
+        print "加载U型光电传感器"
+        self.photoelectricSensor = PhotoelectricSensor(photoelectricSensorPin, locationTotal, reedSwitchPin, self)
 
     def leftPosition(self):
         self.motor.left()
@@ -160,40 +166,39 @@ class ControlMotor(object):
         if not self.motor.status:
             setLed(25)
             self.motor.status = True
-
+            self.doubleClickTimeFlag = time.time()
             while GPIO.input(self.btnPin) == 0:
                 if self.doubleClickFlag:
+                    # print "向右旋转", time.time()
                     self.motor.right()
                 else:
+                    # print "向左旋转", time.time()
                     self.motor.left()
 
-            self.__click()
             self.motor.status = False
             setLedOff(25)
         # status = GPIO.input(self.ReedSwitchPin)
 
-    def __click(self):
+    def __doubleClick(self, callback):
         result = 0
         for i in range(200):
             time.sleep(0.001)
             pinStat = GPIO.input(self.btnPin)
             if pinStat == GPIO.LOW and result == 0:
                 result = 1
-            if result == 1 and pinStat == GPIO.HIGH:
+            timeCount = time.time() - self.doubleClickTimeFlag
+            if result == 1 and pinStat == GPIO.HIGH and 0.3 > timeCount > 0.1:
                 result = 2
+                print "设置左右转"
                 if self.doubleClickFlag:
                     setLed(24)
-                    time.sleep(0.25)
-                    setLedOff(23)
+                    time.sleep(0.15)
                     setLedOff(24)
-                    setLedOff(25)
                     self.doubleClickFlag = False
                 else:
                     setLed(24)
-                    time.sleep(0.25)
-                    setLedOff(25)
+                    time.sleep(0.15)
                     setLedOff(24)
-                    setLedOff(23)
                     self.doubleClickFlag = True
                 return result
         return 3
