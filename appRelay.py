@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*
 """
-Adapted excerpt from Getting Started with Raspberry Pi by Matt Richardson
-Modified by Rui Santos
-Complete project details: https://randomnerdtutorials.com
+滑轨控制
 """
 import time
 
 import RPi.GPIO as GPIO
 from flask import Flask, json
 
-from button import Button
 from controlMotor import ControlMotor
-from motor import Motor
-from photoelectricSensor import PhotoelectricSensor
-from reedSwitch import ReedSwitch
-from relay import Relay
 
 app = Flask(__name__)
 
@@ -23,19 +16,8 @@ controlMotor = ControlMotor(17, 16, 13, 12, 20, 18, 19,5,7)
 
 @app.route("/")
 def main():
-    print "设置1号继电器开"
-    setRelay(controlMotor.relayLeft.relayPin, "on")
-    time.sleep(2)
-    print "设置2号继电器开"
-    setRelay(controlMotor.relayRight.relayPin, "on")
-    time.sleep(2)
 
-    print "设置1号继电器关"
-    setRelay(controlMotor.relayLeft.relayPin, "off")
-    time.sleep(2)
-    print "设置2号继电器关"
-    setRelay(controlMotor.relayRight.relayPin, "off")
-    return "电机旋转10秒"
+    return "主页"
 
 
 def setRelay(changePin, action):
