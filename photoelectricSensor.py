@@ -43,23 +43,27 @@ class PhotoelectricSensor(object):
 
             if self.locationCount > 1:
                 self.locationCount -= 1
+                if self.locationNO == -1:
+                    self.relayLeft.setHigh()
+                    self.relayRight.setHigh()
             if self.locationCount <= 1:
                 if self.locationNO == -1:
                     self.relayLeft.setHigh()
+                    self.relayRight.setHigh()
                 else:
                     self.relayLeft.setHigh()
                     self.relayRight.setLow()
                 self.locationCount = 1
                 self.reedSwitch.direction = "right"
-
         else:
-
             if self.locationCount < self.locationTotal:
                 self.locationCount += 1
-                if self.locationCount == 1 and self.locationNO == -1:
+                if self.locationNO == -1:
+                    self.relayLeft.setHigh()
                     self.relayRight.setHigh()
             if self.locationCount >= self.locationTotal:
                 if self.locationNO == -1:
+                    self.relayLeft.setHigh()
                     self.relayRight.setHigh()
                 else:
                     self.relayRight.setHigh()

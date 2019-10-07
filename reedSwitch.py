@@ -10,7 +10,7 @@ class ReedSwitch(object):
     用于检测设备初始位置和确定运行方向
     """
 
-    def __init__(self, reedSwitchPin, relayLeft, relayRight, initPosition="left"):
+    def __init__(self, reedSwitchPin, relayLeft, relayRight, initDirection="left"):
         self.relayRight = relayRight
         self.relayLeft = relayLeft
         print "初始化干簧管监听器"
@@ -22,7 +22,7 @@ class ReedSwitch(object):
         GPIO.add_event_detect(reedSwitchPin, GPIO.BOTH, callback=lambda callback: self.setStatus(callback),
                               bouncetime=200)
         self.status = False
-        self.direction = initPosition
+        self.direction = initDirection
 
     def setStatus(self, callback):
         print "干簧管状态变更:", GPIO.input(self.reedSwitchPin), "原状态status:", self.status
