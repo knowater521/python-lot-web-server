@@ -138,7 +138,7 @@ class InitMotor(Motor):
         GPIO.cleanup()
 
 
-class ControlMotor(object):
+class ControlMotor1(object):
     def __init__(self, IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, photoelectricSensorPin, locationTotal, sleep=0.001,
                  timeout=50):
         self.motor = InitMotor(IN1, IN2, IN3, IN4, reedSwitchPin, btnPin, sleep, timeout)
