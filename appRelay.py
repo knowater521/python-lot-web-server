@@ -32,32 +32,34 @@ def setRelay(changePin, action):
     print "当前运行方向", direction, "当前位置", locationCount
     changePin = int(changePin)
     if action == "on".lower():
-        if controlMotor.relayLeft.relayPin != changePin:
-            controlMotor.relayLeft.setHigh()
-        if controlMotor.relayRight.relayPin != changePin:
-            controlMotor.relayRight.setHigh()
+        if controlMotor.photoelectricSensor.executing:
+            return "设备正在做其他操作，请稍后再试"
+        controlMotor.photoelectricSensor.executing = True
+        controlMotor.relayLeft.setHigh()
+        controlMotor.relayRight.setHigh()
         if changePin == 18:
             if locationCount > 1:
-                controlMotor.relayLeft.setLow()
                 controlMotor.reedSwitch.direction = "left"
+                controlMotor.relayLeft.setLow()
                 print "左转继电器开启"
             else:
-                print "到达1号位置，设置方向为向右"
-                controlMotor.reedSwitch.direction = "right"
+                print "到达1号或初始位置，不可以继续执行向左操作"
+                controlMotor.photoelectricSensor.executing = False
                 return "off"
         else:
             if locationCount < 7:
-                controlMotor.relayRight.setLow()
                 controlMotor.reedSwitch.direction = "right"
+                controlMotor.relayRight.setLow()
                 print "右转继电器开启"
             else:
-                print "到达7号位置，设置方向为向左"
-                controlMotor.reedSwitch.direction = "left"
+                print "到达7号位置，不可以继续执行向右操作"
+                controlMotor.photoelectricSensor.executing = False
                 return "off"
         return "on"
     if action == "off":
         controlMotor.relayRight.setHigh()
         controlMotor.relayLeft.setHigh()
+        controlMotor.photoelectricSensor.executing = False
         return "off"
 
 
@@ -71,18 +73,68 @@ def relayControl(changePin, action):
     return json.dumps(templateData)
 
 
+@app.route("/left")
+def left():
+    controlMotor.photoelectricSensor.timeFlag = time.time()
+    templateData = {
+        'relayPins': 18,
+        'relayMessage': setRelay(18, "on")
+    }
+    return json.dumps(templateData)
+
+
+@app.route("/right")
+def right():
+    controlMotor.photoelectricSensor.timeFlag = time.time()
+    templateData = {
+        'relayPins': 19,
+        'relayMessage': setRelay(19, "on")
+    }
+    return json.dumps(templateData)
+
+
+@app.route("/stop")
+def stop():
+    controlMotor.photoelectricSensor.timeFlag = time.time()
+    templateData = {
+        'relayPins': 1819,
+        'relayMessage': setRelay(18, "off")
+    }
+    return json.dumps(templateData)
+
+
 @app.route("/specified/<location>")
 def specifiedLocation(location):
-    if int(location) > 7 or int(location) < 1:
+    if int(location) > 7 or int(location) < 1 or controlMotor.photoelectricSensor.executing:
         templateData = {
-            'message': "只能选择1-7之间的数据",
+            'message': "只能选择1-7之间的数据,或程序正在执行中，请稍后操作",
             'locationNow': controlMotor.photoelectricSensor.locationCount
         }
         return json.dumps(templateData)
     controlMotor.photoelectricSensor.timeFlag = time.time()
+    controlMotor.photoelectricSensor.executing = True
     templateData = {
         'message': "程序已启动",
         'locationNow': controlMotor.photoelectricSensor.specifiedLocation(int(location))
+    }
+    return json.dumps(templateData)
+
+
+@app.route("/init")
+def init():
+    timeFlagLocal = time.time()
+    timeoutLocal = 0
+    controlMotor.relayLeft.setHigh()
+    controlMotor.relayRight.setHigh()
+    controlMotor.photoelectricSensor.uninstall()
+    controlMotor.relayLeft.setLow()
+    while GPIO.input(controlMotor.reedSwitch.reedSwitchPin) == GPIO.HIGH and timeoutLocal < 50:
+        timeoutLocal = time.time() - timeFlagLocal
+        pass
+    controlMotor.relayLeft.setHigh()
+    controlMotor.photoelectricSensor.install()
+    templateData = {
+        'message': "设备初始化已经执行完毕"
     }
     return json.dumps(templateData)
 
@@ -99,7 +151,7 @@ if __name__ == "__main__":
         controlMotor.relayLeft.setLow()
         while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 50:
             timeout = time.time() - timeFlag
-            print timeout
+            # print timeout
             pass
         print "主程序清理"
         GPIO.cleanup()

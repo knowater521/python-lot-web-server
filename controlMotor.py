@@ -48,6 +48,25 @@ class ControlMotor(object):
         # Button(24, 20, self.motor, self.reedSwitch)
         # Button(23, 20, self.motor, self.reedSwitch)
 
+        # GPIO.add_event_callback(reedSwitchPin, callback=lambda callback: self.setLocationCountStatus(callback))
+
+    def setLocationCountStatus(self, callback):
+        """
+        暂时不使用
+        :param callback:
+        :return:
+        """
+        if self.reedSwitch.direction == "right":
+            self.photoelectricSensor.locationCount = self.locationTotal + 1
+            self.reedSwitch.direction = "left"
+            self.photoelectricSensor.executing = True
+            self.relayLeft.setLow()
+        else:
+            self.photoelectricSensor.locationCount = -1
+            self.reedSwitch.direction = "right"
+            self.photoelectricSensor.executing = True
+            self.relayRight.setLow()
+
     def init_motor(self):
 
         if self.reedSwitch.direction == "left":

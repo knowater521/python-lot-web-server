@@ -19,14 +19,14 @@ class ReedSwitch(object):
         # 设置干簧管为输入模式，上拉电位至3.3V
         GPIO.setup(reedSwitchPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.remove_event_detect(self.reedSwitchPin)
-        GPIO.add_event_detect(reedSwitchPin, GPIO.BOTH, callback=lambda callback: self.setStatus(callback),
-                              bouncetime=200)
-        self.status = False
+        GPIO.add_event_detect(reedSwitchPin, GPIO.BOTH, callback=lambda callback: self.setStatus(callback)
+                              , bouncetime=200)
+        # GPIO.add_event_detect(reedSwitchPin, GPIO.BOTH, bouncetime=200)
+        # GPIO.add_event_callback(reedSwitchPin, callback=lambda callback: self.setStatus(callback))
         self.direction = initDirection
 
     def setStatus(self, callback):
-        print "干簧管状态变更:", GPIO.input(self.reedSwitchPin), "原状态status:", self.status
-        self.status = GPIO.input(self.reedSwitchPin) == 1
+        print "干簧管被触发"
         self.relayRight.setHigh()
         self.relayLeft.setHigh()
 
