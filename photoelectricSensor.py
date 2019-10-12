@@ -20,6 +20,8 @@ class PhotoelectricSensor(object):
         :param locationTotal: 总共设定多少个位置
         :param initPin 初始化传感器串口
         """
+        self.timeFlag = time.time()
+        self.timeout = 2
         self.relayLeft = relayLeft
         self.relayRight = relayRight
         self.reedSwitch = reedSwitch
@@ -32,11 +34,17 @@ class PhotoelectricSensor(object):
         GPIO.setup(photoelectricSensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.remove_event_detect(self.photoelectricSensorPin)
         GPIO.remove_event_detect(self.photoelectricSensorPin)
-        GPIO.add_event_detect(photoelectricSensorPin, GPIO.BOTH, callback=lambda callback: self.__setStatus(callback),
-                              bouncetime=200)
+        GPIO.add_event_detect(photoelectricSensorPin, GPIO.FALLING, callback=lambda callback: self.__setStatus(callback),
+                              bouncetime=500)
         self.locationNO = -1
 
     def __setStatus(self, callback):
+        if (time.time() - self.timeFlag) < self.timeout:
+            print "短时间内光电被触发，本次事件不被执行"
+            return
+        else:
+            print self.timeout, "timeout", self.timeFlag, "timeflag", time.time(), "Now"
+            self.timeFlag = time.time()
         # os.system('clear')  # verlangsamt die Bewegung des Motors zu sehr.
         print "电机运行方向：", self.reedSwitch.direction, "U型光电被触发,之前位置：", self.locationCount
         if self.reedSwitch.direction == "left":

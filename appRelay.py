@@ -63,7 +63,7 @@ def setRelay(changePin, action):
 
 @app.route("/relay/<changePin>/<action>")
 def relayControl(changePin, action):
-
+    controlMotor.photoelectricSensor.timeFlag = time.time()
     templateData = {
         'relayPins': changePin,
         'relayMessage': setRelay(changePin, action)
@@ -79,6 +79,7 @@ def specifiedLocation(location):
             'locationNow': controlMotor.photoelectricSensor.locationCount
         }
         return json.dumps(templateData)
+    controlMotor.photoelectricSensor.timeFlag = time.time()
     templateData = {
         'message': "程序已启动",
         'locationNow': controlMotor.photoelectricSensor.specifiedLocation(int(location))
@@ -94,8 +95,11 @@ if __name__ == "__main__":
         GPIO.remove_event_detect(controlMotor.photoelectricSensorPin)
         print "设备归位中。。。"
         timeFlag = time.time()
+        timeout = 0
         controlMotor.relayLeft.setLow()
-        while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) or (time.time() - timeFlag < 60):
+        while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 50:
+            timeout = time.time() - timeFlag
+            print timeout
             pass
         print "主程序清理"
         GPIO.cleanup()
