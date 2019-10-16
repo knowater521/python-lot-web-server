@@ -2,6 +2,7 @@
 """
 滑轨控制
 """
+import os
 import time
 
 import RPi.GPIO as GPIO
@@ -11,7 +12,7 @@ from controlMotor import ControlMotor
 
 app = Flask(__name__)
 
-controlMotor = ControlMotor(17, 16, 13, 12, 20, 18, 19,5,7)
+controlMotor = ControlMotor(17, 16, 13, 12, 20, 18, 19, 5, 7)
 
 
 @app.route("/")
@@ -156,21 +157,36 @@ def setLocation(location):
         return "设置成功，当前设置位置为：" + str(location)
 
 
+@app.route("/current/position")
+def currentPosition():
+    return str(controlMotor.photoelectricSensor.locationCount)
+
+
+def releaseResources():
+    controlMotor.relayStop()
+    print("卸载光电传感器")
+    GPIO.remove_event_detect(controlMotor.photoelectricSensorPin)
+    print("设备归位中。。。")
+    timeFlag = time.time()
+    timeout = 0
+    controlMotor.relayLeft.setLow()
+    while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 5000:
+        timeout = time.time() - timeFlag
+        # print timeout
+        pass
+    print("主程序清理")
+    GPIO.cleanup()
+
+
+@app.route("/shutdown")
+def shutdown():
+    releaseResources()
+    os.system("sudo shutdown -h now")
+
+
 if __name__ == "__main__":
     try:
         app.run(host='0.0.0.0', port=80, debug=False, threaded=True)
         # app.run(debug=False, threaded=True)
     finally:
-        controlMotor.relayStop()
-        print ("卸载光电传感器")
-        GPIO.remove_event_detect(controlMotor.photoelectricSensorPin)
-        print ("设备归位中。。。")
-        timeFlag = time.time()
-        timeout = 0
-        controlMotor.relayLeft.setLow()
-        while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 5000:
-            timeout = time.time() - timeFlag
-            # print timeout
-            pass
-        print ("主程序清理")
-        GPIO.cleanup()
+        releaseResources()

@@ -142,6 +142,7 @@ class PhotoelectricSensor(object):
         if locationNO < 0:
             locationNO = 0
         if locationNO == self.locationCount:
+            self.executing = False
             return "当前就在该位置，不需要移动"
 
         self.locationNO = locationNO

@@ -69,14 +69,14 @@ class ControlMotor(object):
             self.reedSwitch.direction = "left"
             self.relayStart()
             print("初始化--当前干簧管状态" + str(GPIO.input(self.reedSwitchPin)))
-            while GPIO.input(self.reedSwitchPin) == GPIO.HIGH and time.time() - timeFlag < 1000:
+            while GPIO.input(self.reedSwitchPin) == GPIO.HIGH and time.time() - timeFlag < 5000:
                 pass
             print("初始化--到达初始位置")
             self.relayStop()
             print("初始化--开始向右行驶到0位置，当前光电状态" + str(GPIO.input(self.photoelectricSensorPin)))
             self.reedSwitch.direction = "right"
             self.relayStart()
-            while GPIO.input(self.photoelectricSensorPin) == GPIO.LOW and time.time() - timeFlag < 1000:
+            while GPIO.input(self.photoelectricSensorPin) == GPIO.LOW and time.time() - timeFlag < 5000:
                 pass
             print("初始化--到达0位置，初始化结束")
             self.relayStop()
@@ -87,12 +87,12 @@ class ControlMotor(object):
             self.relayStop()
             self.reedSwitch.direction = "right"
             self.relayStart()
-            while GPIO.input(self.reedSwitchPin) == GPIO.HIGH and time.time() - timeFlag < 1000:
+            while GPIO.input(self.reedSwitchPin) == GPIO.HIGH and time.time() - timeFlag < 5000:
                 pass
             self.relayStop()
             self.reedSwitch.direction = "left"
             self.relayStart()
-            while GPIO.input(self.photoelectricSensorPin) == GPIO.LOW and time.time() - timeFlag < 1000:
+            while GPIO.input(self.photoelectricSensorPin) == GPIO.LOW and time.time() - timeFlag < 5000:
                 pass
             self.relayStop()
         self.photoelectricSensor.executing = False

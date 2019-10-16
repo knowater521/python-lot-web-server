@@ -25,9 +25,21 @@ while true ; do vcgencmd measure_temp ; sleep 1 ; done
         * 编号必须限制在1 - 7之间，其他数值程序将做忽略处理
     * 设备初始化：
         * http://192.168.1.13/init
+    * 设备关机
+        * http://192.168.1.13/shutdown
+        * 设备恢复到初始位置后关机
+    * 当前位置
+        * http://192.168.1.13/current/position
     
 * 开机启动：
     * 文件路径：/home/pi/pythonproject/web-server/appRelay.py 
+    * 程序启动命令：sudo python appRelay.py 
+    * sudo nohup python /home/pi/pythonproject/web-server/appRelay.py &
+    * ps aux | grep appRelay.py
+    * kell 746
+    
+    
+    
 
          
         
