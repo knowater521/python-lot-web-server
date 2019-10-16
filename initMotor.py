@@ -37,15 +37,15 @@ class InitMotor(Motor):
         """
 
         self.timeout = timeout
-        print "加载干簧管传感器"
+        print ("加载干簧管传感器")
         self.reedSwitch = ReedSwitch(reedSwitchPin)
-        print "加载按键"
+        print ("加载按键")
         self.btn = Button(btnPin)
-        print "初始化电机参数"
+        print ("初始化电机参数")
         super(InitMotor, self).__init__(IN1, IN2, IN3, IN4, sleep)
-        print "初始化设备位置"
+        print ("初始化设备位置")
         self.initMotor()
-        print "设备位置初始化位置结束"
+        print ("设备位置初始化位置结束")
 
     def initMotor(self):
         if self.status:
@@ -55,8 +55,8 @@ class InitMotor(Motor):
         else:
             self.status = True
         btnStatus = self.btn.status
-        print "当前按键状态：", btnStatus
-        print "设备位置初始化开始"
+        print ("当前按键状态：", btnStatus)
+        print ("设备位置初始化开始")
         reedSwitch = self.reedSwitch
         reedSwitch.status = False
         startTime = time.time()
@@ -70,7 +70,7 @@ class InitMotor(Motor):
                 setLed(24)
                 self.initMassage = "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
                 return False, "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
-        print "到达设备初始位置附近"
+        print ("到达设备初始位置附近")
         flag = False
         for x in range(1, 150):
             if self.btn.status != btnStatus:
@@ -91,7 +91,7 @@ class InitMotor(Motor):
                 break
 
         if not flag:
-            print "没有到达预设位置，再次寻找.."
+            print ("没有到达预设位置，再次寻找..")
 
             reedSwitch.status = False
             while not reedSwitch.status:
@@ -104,7 +104,7 @@ class InitMotor(Motor):
                     setLed(24)
                     self.initMassage = "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
                     return False, "设备初始化超时，请检查1号传感器组合状态或1号电机有无正常运转"
-            print "到达设备初始位置附近"
+            print ("到达设备初始位置附近")
             for x in range(1, 200):
                 if self.btn.status != btnStatus:
                     setLed(25)
@@ -129,12 +129,12 @@ class InitMotor(Motor):
         return (time.time() - startTime) > self.timeout
 
     def __del__(self):
-        print "电机控制类被销毁，终止电机IO输出：", self.IN1, self.IN2, self.IN3, self.IN4
+        print ("电机控制类被销毁，终止电机IO输出：", self.IN1, self.IN2, self.IN3, self.IN4)
         GPIO.output(self.IN1, False)
         GPIO.output(self.IN2, False)
         GPIO.output(self.IN3, False)
         GPIO.output(self.IN4, False)
-        print "清理GPIO GPIO.cleanup()"
+        print ("清理GPIO GPIO.cleanup()")
         GPIO.cleanup()
 
 
@@ -147,11 +147,11 @@ class ControlMotor1(object):
         self.initMotorMessage = self.motor.initMassage
         self.btnPin = btnPin
         self.doubleClickTimeFlag = 0
-        print "初始化结果：", self.initMotorMessage
-        print "加载手动调整电机"
+        print ("初始化结果：", self.initMotorMessage)
+        print ("加载手动调整电机")
         GPIO.add_event_callback(btnPin, callback=lambda callback: self.__controlMotor(callback))
         GPIO.add_event_callback(btnPin, callback=lambda callback: self.__doubleClick(callback))
-        print "加载U型光电传感器"
+        print ("加载U型光电传感器")
         self.photoelectricSensor = PhotoelectricSensor(photoelectricSensorPin, locationTotal, reedSwitchPin, self)
 
     def leftPosition(self):
@@ -169,10 +169,10 @@ class ControlMotor1(object):
             self.doubleClickTimeFlag = time.time()
             while GPIO.input(self.btnPin) == 0:
                 if self.doubleClickFlag:
-                    # print "向右旋转", time.time()
+                    # print ("向右旋转", time.time()
                     self.motor.right()
                 else:
-                    # print "向左旋转", time.time()
+                    # print ("向左旋转", time.time()
                     self.motor.left()
 
             self.motor.status = False
@@ -189,7 +189,7 @@ class ControlMotor1(object):
             timeCount = time.time() - self.doubleClickTimeFlag
             if result == 1 and pinStat == GPIO.HIGH and 0.3 > timeCount > 0.1:
                 result = 2
-                print "设置左右转"
+                print ("设置左右转")
                 if self.doubleClickFlag:
                     setLed(24)
                     time.sleep(0.15)

@@ -10,7 +10,7 @@ class Button(object):
         self.reedSwitch = reedSwitch
         self.reedSwitchPin = reedSwitchPin
         self.motor = motor
-        print "初始化btn", btnPin
+        print ("初始化btn", btnPin)
         self.btnPin = btnPin
         GPIO.setmode(GPIO.BCM)
         # 设置干簧管为输入模式，上拉电位至3.3V
@@ -20,7 +20,7 @@ class Button(object):
         GPIO.add_event_detect(btnPin, GPIO.BOTH, callback=lambda callback: self.__setStatus(callback), bouncetime=200)
 
     def __setStatus(self, callback):
-        print "继电器被改变：", self.btnPin, GPIO.input(self.btnPin)
+        print ("继电器被改变：", self.btnPin, GPIO.input(self.btnPin))
         if self.status:
             self.status = False
         else:
@@ -30,4 +30,4 @@ class Button(object):
                 self.motor.left()
             else:
                 self.motor.right()
-        print "电机停止", self.direction,  "旋转"
+        print ("电机停止", self.direction,  "旋转")

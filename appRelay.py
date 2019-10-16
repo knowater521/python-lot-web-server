@@ -29,7 +29,7 @@ def setRelay(changePin, action):
     """
     direction = controlMotor.reedSwitch.direction
     locationCount = controlMotor.photoelectricSensor.locationCount
-    print "当前运行方向", direction, "当前位置", locationCount
+    print ("当前运行方向" + str(direction) + "当前位置" + str(locationCount))
     changePin = int(changePin)
     if action == "on".lower():
         if controlMotor.photoelectricSensor.executing:
@@ -41,18 +41,18 @@ def setRelay(changePin, action):
             if locationCount > 1:
                 controlMotor.reedSwitch.direction = "left"
                 controlMotor.relayLeft.setLow()
-                print "左转继电器开启"
+                print ("左转继电器开启")
             else:
-                print "到达1号或初始位置，不可以继续执行向左操作"
+                print ("到达1号或初始位置，不可以继续执行向左操作")
                 controlMotor.photoelectricSensor.executing = False
                 return "off"
         else:
             if locationCount < 7:
                 controlMotor.reedSwitch.direction = "right"
                 controlMotor.relayRight.setLow()
-                print "右转继电器开启"
+                print ("右转继电器开启")
             else:
-                print "到达7号位置，不可以继续执行向右操作"
+                print ("到达7号位置，不可以继续执行向右操作")
                 controlMotor.photoelectricSensor.executing = False
                 return "off"
         return "on"
@@ -60,6 +60,7 @@ def setRelay(changePin, action):
         controlMotor.relayRight.setHigh()
         controlMotor.relayLeft.setHigh()
         controlMotor.photoelectricSensor.executing = False
+        controlMotor.photoelectricSensor.locationNO = -1
         return "off"
 
 
@@ -122,36 +123,54 @@ def specifiedLocation(location):
 
 @app.route("/init")
 def init():
-    timeFlagLocal = time.time()
-    timeoutLocal = 0
-    controlMotor.relayLeft.setHigh()
-    controlMotor.relayRight.setHigh()
-    controlMotor.photoelectricSensor.uninstall()
-    controlMotor.relayLeft.setLow()
-    while GPIO.input(controlMotor.reedSwitch.reedSwitchPin) == GPIO.HIGH and timeoutLocal < 50:
-        timeoutLocal = time.time() - timeFlagLocal
-        pass
-    controlMotor.relayLeft.setHigh()
-    controlMotor.photoelectricSensor.install()
+    # controlMotor.photoelectricSensor.executing = True
+    # timeFlagLocal = time.time()
+    # timeoutLocal = 0
+    # controlMotor.relayLeft.setHigh()
+    # controlMotor.relayRight.setHigh()
+    # controlMotor.photoelectricSensor.uninstall()
+    # controlMotor.relayLeft.setLow()
+    # while GPIO.input(controlMotor.reedSwitch.reedSwitchPin) == GPIO.HIGH and timeoutLocal < 5000:
+    #     timeoutLocal = time.time() - timeFlagLocal
+    #     pass
+    # controlMotor.relayLeft.setHigh()
+    # controlMotor.photoelectricSensor.install()
+
+    controlMotor.init_motor()
     templateData = {
         'message': "设备初始化已经执行完毕"
     }
+
     return json.dumps(templateData)
+
+
+@app.route("/set/location/<location>")
+def setLocation(location):
+    if controlMotor.photoelectricSensor.executing:
+        return "设备正在执行任务，稍后再试！"
+    else:
+        if int(location) > 7 or int(location) < 0:
+            return "位置指定只能选择0-7之间！"
+        controlMotor.photoelectricSensor.locationCount = int(location)
+        controlMotor.photoelectricSensor.locationNO = -1
+        return "设置成功，当前设置位置为：" + str(location)
 
 
 if __name__ == "__main__":
     try:
         app.run(host='0.0.0.0', port=80, debug=False, threaded=True)
+        # app.run(debug=False, threaded=True)
     finally:
-        print "卸载光电传感器"
+        controlMotor.relayStop()
+        print ("卸载光电传感器")
         GPIO.remove_event_detect(controlMotor.photoelectricSensorPin)
-        print "设备归位中。。。"
+        print ("设备归位中。。。")
         timeFlag = time.time()
         timeout = 0
         controlMotor.relayLeft.setLow()
-        while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 50:
+        while (GPIO.input(controlMotor.reedSwitchPin) != GPIO.LOW) and timeout < 5000:
             timeout = time.time() - timeFlag
             # print timeout
             pass
-        print "主程序清理"
+        print ("主程序清理")
         GPIO.cleanup()

@@ -10,13 +10,27 @@ while true ; do vcgencmd measure_temp ; sleep 1 ; done
 设备初始位置 - cp1 >cp2>cp3>cp4>cp5>cp6>cp7 
 * 程序启动，向右行驶5秒，离开干簧管传感器，向左行驶15秒，期间抵达传感器位置时自动停止电机转动，15秒后开始注册光电传感器
 * 后台暴露端口：
-    * 向右行驶下一个位置：http://address/relay/19/on
-    * 向左行驶下一个位置：http://address/relay/18/on
-    * 急停（接口调用方式）：http://address/relay/18（or 19）/off（or **）
-    * 当抵达最后一个产品位置时，请求相同方向当接口时程序不会启动电机，并忽略本次请求
-    * 指向指定位置：http://address/specified/{Location number}
-    * 编号必须限制在1 - 7之间，其他数值程序将做忽略处理
-    * 抵达指定位置后再做相同请求程序忽略执行该操作
+    * 左右移动
+        * 向左 http://192.168.1.13/left
+        * 向右 http://192.168.1.13/right
+        * 急停 http://192.168.1.13/stop
+        * 当抵达最后一个产品位置时，请求相同方向当接口时程序不会启动电机，并忽略本次请求
+    * 移动到指定位置：
+        *http://address/specified/{Location number}
+        * 编号必须限制在1 - 7之间，其他数值程序将做忽略处理
+        * 抵达指定位置后再做相同请求程序忽略执行该操作
+    * 强制指定当前位置：
+        * http://address/set/location/{Location number}
+        * 用于存在误差时，将设备推到指定位置后手动设置当前位置，而不需要初始化位置
+        * 编号必须限制在1 - 7之间，其他数值程序将做忽略处理
+    * 设备初始化：
+        * http://192.168.1.13/init
+    
+* 开机启动：
+    * 文件路径：/home/pi/pythonproject/web-server/appRelay.py 
+
+         
+        
 >0
 >>1
 >>>2

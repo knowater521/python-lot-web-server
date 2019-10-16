@@ -25,7 +25,7 @@ class PhotoelectricSensor(object):
         self.reedSwitch.direction 电机方向
         """
         self.timeFlag = time.time()
-        self.timeout = 2
+        self.timeout = 5
         self.relayLeft = relayLeft
         self.relayRight = relayRight
         self.reedSwitch = reedSwitch
@@ -39,16 +39,15 @@ class PhotoelectricSensor(object):
         GPIO.setmode(GPIO.BCM)
         # 设置U型光电传感器为输入模式，上拉电位至3.3V
         GPIO.setup(photoelectricSensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.remove_event_detect(self.photoelectricSensorPin)
-        GPIO.add_event_detect(photoelectricSensorPin, GPIO.FALLING, callback=lambda callback: self.__setStatus1(callback),
-                              bouncetime=500)
+        # 初始化时注册 GPIO.remove_event_detect(self.photoelectricSensorPin)
+        # GPIO.add_event_detect(photoelectricSensorPin, GPIO.FALLING, callback=lambda callback: self.setStatus1(callback),bouncetime=500)
 
-    def __setStatus1(self, callback):
+    def setStatus1(self, callback):
         if (time.time() - self.timeFlag) < self.timeout:
-            print "短时间内光电被触发，本次事件不被执行"
+            print ("短时间内光电被触发，本次事件不被执行")
             return
         else:
-            print "光电传感器被触发，开始执行触发逻辑。。。。。"
+            print ("光电传感器被触发，开始执行触发逻辑。。。。。")
             self.timeFlag = time.time()
 
         # 如果是要指定某一个位置
@@ -60,17 +59,17 @@ class PhotoelectricSensor(object):
             else:
                 # 指定向右某个位置
                 self.locationCount += 1
-            print "指定位置：", self.locationNO, "现已到达：", self.locationCount
+            print ("指定位置：" + str(self.locationNO) + "现已到达：" + str(self.locationCount))
             if self.locationCount == self.locationNO:
                 # 到达指定位置
                 self.relayLeft.setHigh()
                 self.relayRight.setHigh()
                 self.executing = False
                 self.locationNO = -1
-                print "位置已经到达：", self.locationCount, "指定位置参数locationNO初始化完成，释放继电器控制"
+                print ("位置已经到达：" + str(self.locationCount) + "指定位置参数locationNO初始化完成，释放继电器控制")
 
         else:
-            print "光电传感器被触发到下一个位置！触发前位置：", self.locationCount, "电机当前执行方向：", self.reedSwitch.direction
+            print ("光电传感器被触发到下一个位置！触发前位置：" + str(self.locationCount) + "电机当前执行方向：" + str(self.reedSwitch.direction))
             self.relayLeft.setHigh()
             self.relayRight.setHigh()
             self.executing = False
@@ -83,13 +82,13 @@ class PhotoelectricSensor(object):
 
     def __setStatus(self, callback):
         if (time.time() - self.timeFlag) < self.timeout:
-            print "短时间内光电被触发，本次事件不被执行"
+            print ("短时间内光电被触发，本次事件不被执行")
             return
         else:
-            print self.timeout, "timeout", self.timeFlag, "timeflag", time.time(), "Now"
+            print (str(self.timeout) + "timeout" + str(self.timeFlag) + "timeflag" + str(time.time()) + "Now")
             self.timeFlag = time.time()
         # os.system('clear')  # verlangsamt die Bewegung des Motors zu sehr.
-        print "电机运行方向：", self.reedSwitch.direction, "U型光电被触发,之前位置：", self.locationCount
+        print ("电机运行方向：" + str(self.reedSwitch.direction) + "U型光电被触发,之前位置：" + str(self.locationCount))
         if self.reedSwitch.direction == "left":
 
             if self.locationCount > 1:
@@ -122,22 +121,22 @@ class PhotoelectricSensor(object):
                 self.locationCount = self.locationTotal
                 self.reedSwitch.direction = "left"
 
-        print "locationNO:", self.locationNO
+        print ("locationNO:", self.locationNO)
 
         if self.locationNO > 0:
-            print "self.locationNO == self.locationCount", self.locationNO, self.locationCount,\
-                self.locationNO == self.locationCount
+            print ("self.locationNO == self.locationCount" + str(self.locationNO) + str(self.locationCount)
+                   + str(self.locationNO == self.locationCount))
             if self.locationNO == self.locationCount:
                 self.relayLeft.setHigh()
                 self.relayRight.setHigh()
                 self.locationNO = -1
 
-        print "U型光电当前所在位置：", self.locationCount
+        print ("U型光电当前所在位置：" + str(self.locationCount))
 
     def specifiedLocation(self, locationNO):
         self.relayLeft.setHigh()
         self.relayRight.setHigh()
-        print "要设置的位置：", locationNO, "当前所在位置：", self.locationCount
+        print ("要设置的位置：" + str(locationNO) + "当前所在位置：" + str(self.locationCount))
         if locationNO > 7:
             locationNO = 7
         if locationNO < 0:
@@ -157,19 +156,19 @@ class PhotoelectricSensor(object):
             self.relayLeft.setLow()
         if self.reedSwitch.direction == "right":
             self.relayRight.setLow()
-        return "当前设备位置", self.locationCount, "将向", self.reedSwitch.direction, "移动到", self.locationNO
+        return "当前设备位置" + str(self.locationCount) + "将向" + str(self.reedSwitch.direction) + "移动到" + str(self.locationNO)
 
     def uninstall(self):
         """
         卸载光电传感器
         :return:
         """
-        print "卸载光电传感器"
+        print ("卸载光电传感器")
         GPIO.remove_event_detect(self.photoelectricSensorPin)
         self.locationCount = 0
         self.locationNO = -1
         self.reedSwitch.direction = "left"
-        print "光电传感器已卸载，电机向左行驶"
+        print ("光电传感器已卸载，电机向左行驶")
         pass
 
     def install(self):
@@ -177,10 +176,10 @@ class PhotoelectricSensor(object):
         初始化光电传感器
         :return:
         """
-        print "初始化电传感器"
+        print ("初始化电传感器")
         GPIO.remove_event_detect(self.photoelectricSensorPin)
         GPIO.add_event_detect(self.photoelectricSensorPin, GPIO.FALLING,
-                              callback=lambda callback: self.__setStatus1(callback),
+                              callback=lambda callback: self.setStatus1(callback),
                               bouncetime=500)
-        print "光电传感器重新注册成功"
+        print ("光电传感器重新注册成功")
 
