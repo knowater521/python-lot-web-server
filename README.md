@@ -39,7 +39,7 @@ while true ; do vcgencmd measure_temp ; sleep 1 ; done
     * 程序启动命令：sudo python appRelay.py 
     * sudo nohup python /home/pi/pythonproject/web-server/appRelay.py &
     * ps aux | grep appRelay.py
-    * kell 746
+    * kill 746
     
     
     
