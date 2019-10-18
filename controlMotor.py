@@ -42,7 +42,7 @@ class ControlMotor(object):
         self.photoelectricSensor = PhotoelectricSensor(photoelectricSensorPin, self.reedSwitch.reedSwitchPin,
                                                        self.reedSwitch, self.relayLeft, self.relayRight, locationTotal)
 
-        print("初始化继电器开，方向：", initPosition)
+        print("初始化继电器开，方向：" + initPosition)
         self.init_motor()
         print("设备初始完成")
 

@@ -3,21 +3,46 @@
 滑轨控制
 """
 import os
+import socket
 import time
 
 import RPi.GPIO as GPIO
+
 from flask import Flask, json
+# from flask_cors import CORS, cross_origin
+from flask_cors import *
 
 from controlMotor import ControlMotor
 
 app = Flask(__name__)
+# cors = CORS(app)
+CORS(app, supports_credentials=True)
 
-controlMotor = ControlMotor(17, 16, 13, 12, 20, 18, 19, 5, 7)
+
+def IsOpen(ip, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((ip, int(port)))
+        s.shutdown(2)
+        # 利用shutdown()函数使socket双向数据传输变为单向数据传输。shutdown()需要一个单独的参数，
+        # 该参数表示了如何关闭socket。具体为：0表示禁止将来读；1表示禁止将来写；2表示禁止将来读和写。
+        print('is open port:' + str(port))
+        s.close()
+        return True
+    except Exception as e:
+        print('is down port:' + str(port), e)
+        return False
+
+
+if IsOpen("127.0.0.1", "80"):
+    print("程序已经执行或端口被占用，初始化设备禁止！")
+else:
+    controlMotor = ControlMotor(17, 16, 13, 12, 20, 18, 19, 5, 7)
 
 
 @app.route("/")
+# @cross_origin()
 def main():
-
     return "主页"
 
 
@@ -30,7 +55,7 @@ def setRelay(changePin, action):
     """
     direction = controlMotor.reedSwitch.direction
     locationCount = controlMotor.photoelectricSensor.locationCount
-    print ("当前运行方向" + str(direction) + "当前位置" + str(locationCount))
+    print("当前运行方向" + str(direction) + "当前位置" + str(locationCount))
     changePin = int(changePin)
     if action == "on".lower():
         if controlMotor.photoelectricSensor.executing:
@@ -42,18 +67,18 @@ def setRelay(changePin, action):
             if locationCount > 1:
                 controlMotor.reedSwitch.direction = "left"
                 controlMotor.relayLeft.setLow()
-                print ("左转继电器开启")
+                print("左转继电器开启")
             else:
-                print ("到达1号或初始位置，不可以继续执行向左操作")
+                print("到达1号或初始位置，不可以继续执行向左操作")
                 controlMotor.photoelectricSensor.executing = False
                 return "off"
         else:
             if locationCount < 7:
                 controlMotor.reedSwitch.direction = "right"
                 controlMotor.relayRight.setLow()
-                print ("右转继电器开启")
+                print("右转继电器开启")
             else:
-                print ("到达7号位置，不可以继续执行向右操作")
+                print("到达7号位置，不可以继续执行向右操作")
                 controlMotor.photoelectricSensor.executing = False
                 return "off"
         return "on"
@@ -185,8 +210,11 @@ def shutdown():
 
 
 if __name__ == "__main__":
-    try:
-        app.run(host='0.0.0.0', port=80, debug=False, threaded=True)
-        # app.run(debug=False, threaded=True)
-    finally:
-        releaseResources()
+    if IsOpen("127.0.0.1", "80"):
+        print("程序已经执行或端口被占用，本次执行终止")
+    else:
+        try:
+            app.run(host='0.0.0.0', port=80, debug=False, threaded=True)
+            # app.run(debug=False, threaded=True)
+        finally:
+            releaseResources()
